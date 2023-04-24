@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {useState} from 'react';
 import {
   SafeAreaView,
@@ -50,7 +51,14 @@ function TaskApp() {
   const realm = useRealm();
   const tasks = useQuery(Task);
   const [newDescription, setNewDescription] = useState('');
-
+  const [descriptionToEdit, setEditDescription] = useState('');
+  const [selectedItem, setSelectedItem] = useState('');
+  const changeProfileName = (profile: Task, editDescription: string) => {
+    realm.write(() => {
+      profile.description = editDescription;
+    });
+    setEditDescription('');
+  };
   return (
     <SafeAreaView>
       <View
@@ -70,35 +78,72 @@ function TaskApp() {
           <Text>➕</Text>
         </Pressable>
       </View>
+
       <FlatList
-        data={tasks.sorted('createdAt')}
+        data={tasks?.sorted('createdAt')}
         keyExtractor={item => item._id.toHexString()}
         renderItem={({item}) => {
           return (
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'center',
-                margin: 10,
-              }}>
-              <Pressable
-                onPress={() =>
-                  realm.write(() => {
-                    item.isComplete = !item.isComplete;
-                  })
-                }>
-                <Text>{item.isComplete ? '✅' : '☑️'}</Text>
-              </Pressable>
-              <Text style={{paddingHorizontal: 10}}>{item.description}</Text>
-              <Pressable
-                onPress={() => {
-                  realm.write(() => {
-                    realm.delete(item);
-                  });
+            <>
+              <View
+                style={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  margin: 10,
+                  borderWidth: 2,
+                  borderColor: 'green',
                 }}>
-                <Text>{'🗑️'}</Text>
-              </Pressable>
-            </View>
+                <Text
+                  style={{
+                    paddingHorizontal: 10,
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    marginHorizontal: 10,
+                  }}>
+                  description: {item.description}
+                </Text>
+                <TextInput
+                  style={{
+                    paddingHorizontal: 10,
+                    borderColor: 'yellow',
+                    borderWidth: 2,
+                    margin: 10,
+                  }}
+                  onFocus={() => setSelectedItem(item._id.toHexString())}
+                  value={
+                    selectedItem === item._id.toHexString()
+                      ? descriptionToEdit
+                      : ''
+                  }
+                  placeholder="Enter description to edit"
+                  onChangeText={
+                    selectedItem === item._id.toHexString()
+                      ? setEditDescription
+                      : () => null
+                  }
+                />
+                <Pressable
+                  onPress={() => changeProfileName(item, descriptionToEdit)}>
+                  <Text
+                    style={{
+                      paddingHorizontal: 10,
+                      borderColor: 'yellow',
+                      borderWidth: 2,
+                      margin: 10,
+                    }}>
+                    Guardar cambios
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    realm.write(() => {
+                      realm.delete(item);
+                    });
+                  }}>
+                  <Text>Borrar {'🗑️'}</Text>
+                </Pressable>
+              </View>
+            </>
           );
         }}
       />
